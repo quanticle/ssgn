@@ -3,10 +3,10 @@ from unittest.mock import (
     patch
 )
 
-
 from ssgn.ssgn import (
     convert_to_html,
-    get_output_path
+    get_output_path,
+    get_input_files
 )
 
 class TestSSGN:
@@ -24,4 +24,19 @@ class TestSSGN:
         output_filename = get_output_path("input", "input/foo/bar/test.md", "output")
         assert output_filename == "output/foo/bar/test.md"
 
-    
+    @patch('ssgn.ssgn.Path')
+    def test_get_input_files_only_mdfiles(self, patched_path):
+        patched_path().glob.side_effect = [["foo/bar/test1.md", "foo/test2.md"], []]
+
+        input_files = list(get_input_files("foo"))
+        
+        patched_path.assert_called_with("foo")
+        assert input_files == ["foo/bar/test1.md", "foo/test2.md"]
+
+    @patch('ssgn.ssgn.Path')
+    def test_get_input_files_only_markdownfiles(self, patched_path):
+        patched_path().glob.side_effect = [[], ["foo/test1.markdown", "foo/bar/test_2.markdown"]]
+
+        input_files = list(get_input_files("foo"))
+        patched_path.assert_called_with("foo")
+        assert input_files == ["foo/test1.markdown", "foo/bar/test_2.markdown"]
